@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UFO Bắt Học Sinh Lên Bảng - Phân Quyền Key</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        @keyframes floatUFO {
+            0%, 100% { transform: translateY(0px) translateX(0px); }
+            50% { transform: translateY(-22px) translateX(25px); }
+        }
+        .animate-ufo { animation: floatUFO 3s ease-in-out infinite; }
+
+        @keyframes laserBeam {
+            0% { opacity: 0.8; transform: scaleX(0.95); }
+            50% { opacity: 1; transform: scaleX(1.15); }
+            100% { opacity: 0.8; transform: scaleX(0.95); }
+        }
+        .animate-laser { animation: laserBeam 0.7s infinite; }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 40px rgba(16, 185, 129, 0.7), inset 0 0 20px rgba(255,255,255,0.5); }
+            50% { box-shadow: 0 0 80px rgba(16, 185, 129, 1), inset 0 0 35px rgba(255,255,255,0.9); }
+        }
+        .ufo-glow { animation: pulseGlow 1.5s infinite; }
+
+        @keyframes studentSuck {
+            0% { transform: translateY(0) scale(1) rotate(0deg); }
+            50% { transform: translateY(-60px) scale(0.8) rotate(-6deg); }
+            100% { transform: translateY(-130px) scale(0.6) rotate(8deg); }
+        }
+        .student-abducting { animation: studentSuck 0.8s ease-in-out infinite alternate; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col overflow-x-hidden">
+
+    <!-- Header -->
+    <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 p-4 shadow-xl sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-emerald-500/20 text-emerald-400 p-2.5 rounded-2xl border border-emerald-500/30 shadow-inner">
+                    <i class="fa-solid fa-space-shuttle text-2xl animate-pulse"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-tight bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 bg-clip-text text-transparent">UFO Bắt Học Sinh Lên Bảng</h1>
+                    <p class="text-xs text-slate-400">Hệ thống phân quyền Giáo Viên & Học Sinh</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <div id="room-code-badge" class="bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-mono font-bold text-cyan-400 flex items-center gap-1.5">
+                    <i class="fa-solid fa-key text-[10px]"></i> Phòng: <span id="room-code-text">...</span>
+                </div>
+                <div id="current-role-badge" class="bg-indigo-950 border border-indigo-800 px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-300">
+                    Chưa chọn vai trò
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main App Container -->
+    <main class="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6 flex flex-col justify-center">
+
+        <!-- Connection Status Banner -->
+        <div id="connection-status" class="mb-4 bg-amber-500/10 border border-amber-500/20 text-amber-300 px-4 py-3 rounded-2xl text-xs flex items-center justify-between shadow-sm">
+            <span class="flex items-center gap-2"><i class="fa-solid fa-circle-notch animate-spin text-amber-400"></i> Đang kết nối hệ thống đám mây thời gian thực...</span>
+            <button onclick="copyRoomLink()" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 px-3 py-1 rounded-lg font-semibold transition flex items-center gap-1">
+                <i class="fa-solid fa-copy"></i> Sao chép liên kết
+            </button>
+        </div>
+
+        <!-- ================= ROLE SELECTION HOME SCREEN ================= -->
+        <div id="view-role-selection" class="max-w-xl mx-auto w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl space-y-8 my-auto">
+            <div class="text-center space-y-3">
+                <div class="w-20 h-20 bg-gradient-to-tr from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30 text-emerald-400 rounded-3xl mx-auto flex items-center justify-center text-3xl shadow-inner animate-pulse">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <h2 class="text-2xl font-black text-white">Chọn Vai Trò Tham Gia</h2>
+                <p class="text-xs text-slate-400">Vui lòng chọn bạn là Giáo Viên hay Học Sinh để bắt đầu.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Teacher Button Modal Trigger -->
+                <button onclick="openTeacherLoginModal()" class="bg-slate-950 hover:bg-emerald-950/30 border border-slate-800 hover:border-emerald-500/50 p-6 rounded-2xl text-left transition-all group flex flex-col justify-between shadow-lg">
+                    <div class="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center mb-4 text-xl group-hover:scale-110 transition">
+                        <i class="fa-solid fa-chalkboard-user"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition">Giáo Viên</h3>
+                        <p class="text-xs text-slate-400 mt-1">Điều khiển UFO, ra lệnh bắt học sinh trả bài (Yêu cầu Key).</p>
+                    </div>
+                </button>
+
+                <!-- Student Button -->
+                <button onclick="selectStudentRole()" class="bg-slate-950 hover:bg-cyan-950/30 border border-slate-800 hover:border-cyan-500/50 p-6 rounded-2xl text-left transition-all group flex flex-col justify-between shadow-lg">
+                    <div class="w-12 h-12 bg-cyan-500/20 text-cyan-400 rounded-xl flex items-center justify-center mb-4 text-xl group-hover:scale-110 transition">
+                        <i class="fa-solid fa-user-graduate"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white group-hover:text-cyan-400 transition">Học Sinh</h3>
+                        <p class="text-xs text-slate-400 mt-1">Vào lớp, tap liên tục chống lại UFO để không bị bắt.</p>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= TEACHER VIEW ================= -->
+        <div id="view-teacher" class="space-y-6 flex-1 flex flex-col hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Controls Panel -->
+                <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-2xl space-y-5 lg:col-span-1 backdrop-blur">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-bold text-emerald-400 flex items-center gap-2">
+                            <i class="fa-solid fa-sliders"></i> Điều khiển GV
+                        </h2>
+                        <button onclick="returnToHome()" class="text-xs text-slate-400 hover:text-white bg-slate-800 px-2.5 py-1 rounded-lg">Đổi vai trò</button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Số lượng học sinh cần bắt lên bảng:</label>
+                            <input type="number" id="target-count" value="2" min="1" max="10" 
+                                class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-emerald-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Trạng thái vòng chơi (Thời gian 5s):</label>
+                            <div id="game-status-badge" class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-medium flex items-center justify-between text-slate-300">
+                                <span id="status-text-desc">Đang chờ học sinh vào lớp...</span>
+                                <span class="w-3 h-3 rounded-full bg-amber-500 animate-pulse"></span>
+                            </div>
+                        </div>
+
+                        <div class="pt-2 flex flex-col gap-3">
+                            <button onclick="startUFOAbduction()" id="btn-start-game" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-900/40 transition transform active:scale-95 flex items-center justify-center gap-2 text-sm">
+                                <i class="fa-solid fa-meteor"></i> Kích hoạt UFO Hút (5 giây)!
+                            </button>
+                            <button onclick="resetGame()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-3 px-4 rounded-xl transition text-sm flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-rotate-right"></i> Đặt lại ván mới
+                            </button>
+                            <button onclick="clearAllStudents()" class="w-full bg-red-950/40 hover:bg-red-900/50 text-red-300 font-semibold py-2.5 px-4 rounded-xl transition text-xs border border-red-900/40">
+                                <i class="fa-solid fa-user-xmark mr-1"></i> Xóa toàn bộ học sinh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulation Visual Stage -->
+                <div class="bg-gradient-to-b from-slate-950 via-indigo-950 to-slate-900 border border-slate-800/80 rounded-2xl p-4 shadow-2xl lg:col-span-2 flex flex-col relative overflow-hidden min-h-[540px]">
+                    <!-- Starry Night Background Effect -->
+                    <div class="absolute inset-0 opacity-50 pointer-events-none">
+                        <div class="absolute top-8 left-16 w-1.5 h-1.5 bg-cyan-200 rounded-full animate-ping"></div>
+                        <div class="absolute top-14 right-28 w-2 h-2 bg-emerald-300 rounded-full"></div>
+                    </div>
+
+                    <!-- HUGE UFO MOTHERSHIP TOP -->
+                    <div class="flex justify-between items-center z-20 mb-2 px-3">
+                        <div class="flex items-center gap-3">
+                            <!-- Large UFO Graphic -->
+                            <div class="relative animate-ufo scale-125 origin-left">
+                                <div class="w-44 h-16 bg-gradient-to-r from-slate-700 via-cyan-400 to-slate-700 rounded-full shadow-2xl shadow-cyan-500/60 flex items-center justify-center border-2 border-cyan-300 ufo-glow">
+                                    <div class="w-14 h-8 bg-cyan-200/90 rounded-full absolute -top-5 shadow-inner border-2 border-white flex items-center justify-center">
+                                        <div class="w-3.5 h-3.5 bg-pink-500 rounded-full animate-ping"></div>
+                                    </div>
+                                    <div class="flex gap-4 absolute bottom-2">
+                                        <div class="w-2.5 h-2.5 bg-amber-400 rounded-full animate-pulse"></div>
+                                        <div class="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse"></div>
+                                        <div class="w-2.5 h-2.5 bg-amber-400 rounded-full animate-pulse"></div>
+                                        <div class="w-2.5 h-2.5 bg-pink-400 rounded-full animate-pulse"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="abducted-counter" class="bg-slate-900/90 border border-emerald-500/50 px-4 py-1.5 rounded-full text-xs font-mono font-bold text-emerald-400 shadow-lg">
+                            Bị bắt lên bảng: 0
+                        </div>
+                    </div>
+
+                    <!-- Laser Beam Cone Effect -->
+                    <div id="teacher-laser-cone" class="absolute top-24 left-1/2 transform -translate-x-1/2 w-4/5 h-64 bg-gradient-to-b from-emerald-400/40 via-cyan-400/25 to-transparent pointer-events-none hidden animate-laser z-10 rounded-b-full"></div>
+
+                    <!-- City Street Background & Students Grid -->
+                    <div class="flex-1 bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 flex flex-col justify-end relative overflow-hidden backdrop-blur-sm">
+                        
+                        <!-- Street floor line -->
+                        <div class="absolute bottom-0 left-0 right-0 h-12 bg-slate-900 border-t border-slate-800 flex items-center justify-between px-6 z-10 shadow-inner">
+                            <span class="text-[11px] text-slate-300 uppercase tracking-wider font-extrabold flex items-center gap-2">
+                                <i class="fa-solid fa-school text-emerald-400"></i> Sân Trường Lớp Học
+                            </span>
+                            <span id="total-online-badge" class="text-xs font-mono font-bold text-cyan-400">Đã vào: 0 học sinh</span>
+                        </div>
+
+                        <!-- Students List Grid -->
+                        <div id="students-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5 z-20 pb-16">
+                            <div class="text-center text-slate-500 italic col-span-full py-16">Chưa có học sinh nào tham gia...</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ================= STUDENT VIEW ================= -->
+        <div id="view-student" class="space-y-6 flex-1 flex flex-col hidden">
+            
+            <!-- Student Login Screen -->
+            <div id="student-login-box" class="max-w-md mx-auto w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl my-auto space-y-5">
+                <div class="text-center space-y-2">
+                    <div class="w-16 h-16 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 rounded-2xl mx-auto flex items-center justify-center text-2xl shadow-inner">
+                        <i class="fa-solid fa-user-graduate"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-white">Vào Lớp Trả Bài</h2>
+                    <p class="text-xs text-slate-400">Nhập họ tên của bạn để tham gia chống UFO</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Họ và tên của bạn:</label>
+                        <input type="text" id="student-name-input" placeholder="Ví dụ: Nguyễn Văn An" 
+                            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 font-medium">
+                    </div>
+                    <button onclick="joinAsStudent()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-900/40 transition transform active:scale-95">
+                        <i class="fa-solid fa-right-to-bracket mr-2"></i> Vào Phòng Học Ngay
+                    </button>
+                    <button onclick="returnToHome()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl text-xs transition">Quay lại chọn vai trò</button>
+                </div>
+            </div>
+
+            <!-- Student Active Game Screen -->
+            <div id="student-game-box" class="hidden flex-1 flex flex-col items-center justify-center text-center p-6 relative bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-950 rounded-2xl border border-slate-800 shadow-2xl min-h-[500px] overflow-hidden select-none">
+                
+                <!-- UFO Beam Overlay Animation when targeted -->
+                <div id="laser-overlay" class="absolute inset-0 bg-emerald-500/15 pointer-events-none hidden animate-laser border-4 border-emerald-500/50"></div>
+
+                <!-- Status Indicator Top -->
+                <div class="absolute top-4 left-4 right-4 flex justify-between items-center z-20">
+                    <div class="bg-slate-900/90 border border-slate-800 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300 shadow flex items-center gap-2">
+                        <span><i class="fa-solid fa-user text-emerald-400 mr-1"></i> <span id="display-my-name">Học sinh</span></span>
+                        <button onclick="returnToHome()" class="text-[10px] text-slate-400 hover:text-white bg-slate-800 px-2 py-0.5 rounded">Thoát</button>
+                    </div>
+                    <div id="student-status-badge" class="bg-amber-500/20 border border-amber-500/40 text-amber-300 px-3.5 py-1.5 rounded-xl text-xs font-bold shadow">
+                        Đang an toàn dưới đất
+                    </div>
+                </div>
+
+                <!-- Center Interactive Tap Area -->
+                <div class="my-auto z-10 w-full max-w-sm flex flex-col items-center space-y-6">
+                    
+                    <!-- Large UFO Graphic Indicator -->
+                    <div id="ufo-threat-indicator" class="transition-all duration-300 transform scale-125">
+                        <div class="w-40 h-16 bg-gradient-to-r from-slate-700 via-cyan-400 to-slate-700 rounded-full shadow-2xl shadow-cyan-500/60 flex items-center justify-center border-2 border-cyan-300 ufo-glow mx-auto">
+                            <div class="w-12 h-8 bg-cyan-200 rounded-full absolute -top-5 border-2 border-white flex items-center justify-center">
+                                <div class="w-3.5 h-3.5 bg-red-500 rounded-full animate-ping"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 id="game-instruction-title" class="text-2xl font-black text-white tracking-tight">CHUẨN BỊ...</h3>
+                        <p id="game-instruction-desc" class="text-xs text-slate-400 max-w-xs mx-auto">Chờ giáo viên kích hoạt UFO hút tất cả.</p>
+                    </div>
+
+                    <!-- Abduction Meter Bar -->
+                    <div id="abduction-progress-container" class="w-full bg-slate-900 border border-slate-800 rounded-full h-6 p-1 overflow-hidden hidden shadow-inner">
+                        <div id="abduction-progress-bar" class="bg-gradient-to-r from-amber-500 to-red-600 h-full rounded-full transition-all duration-100" style="width: 0%"></div>
+                    </div>
+
+                    <!-- Tap Button (Massive for touch screens) -->
+                    <button id="tap-action-btn" onclick="tapToEscape()" disabled
+                        class="w-48 h-48 rounded-full bg-slate-900 border-4 border-slate-800 text-slate-600 font-black text-lg shadow-2xl transition-all duration-75 flex flex-col items-center justify-center gap-1 active:scale-95 cursor-not-allowed">
+                        <i class="fa-solid fa-hand-pointer text-3xl"></i>
+                        <span>TAP NHANH!</span>
+                    </button>
+                    
+                    <p class="text-[11px] text-slate-500 font-mono">Chạm liên tục (5 giây) để không bị UFO hút lên bảng</p>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Teacher Key Login Modal -->
+    <div id="teacher-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-6 text-center space-y-5 shadow-2xl">
+            <div class="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto text-2xl border border-emerald-500/30">
+                <i class="fa-solid fa-key"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold text-white">Xác Thực Giáo Viên</h3>
+                <p class="text-xs text-slate-400 mt-1">Nhập Mật Khẩu (Key) để truy cập quyền quản trị.</p>
+            </div>
+            <input type="password" id="teacher-key-input" placeholder="Mật khẩu (mặc định: GV12345)" 
+                class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-center font-mono focus:outline-none focus:border-emerald-500 text-sm">
+            <div class="flex gap-2">
+                <button onclick="closeTeacherModal()" class="w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl text-xs transition">Hủy</button>
+                <button onclick="verifyTeacherKey()" class="w-1/2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-2.5 rounded-xl text-xs transition">Xác Nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Modal for Alerts -->
+    <div id="custom-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl">
+            <div id="modal-icon" class="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h3 id="modal-title" class="text-lg font-bold text-white">Thông báo</h3>
+            <p id="modal-message" class="text-xs text-slate-400 leading-relaxed">Nội dung thông báo ở đây.</p>
+            <button onclick="closeModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2.5 rounded-xl text-sm transition">Đóng</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK Imports & App Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        let db, auth, appId, userId;
+        let roomDocRef;
+        let unsubscribeRoom = null;
+
+        let currentRole = null; // 'teacher' or 'student'
+        let myStudentId = '';
+        let myStudentName = '';
+        const TEACHER_SECRET_KEY = "GV12345"; // Key giáo viên
+
+        let roomData = {
+            status: 'waiting',
+            targetCount: 2,
+            teacherId: '',
+            teacherActiveTime: 0,
+            students: {}
+        };
+
+        window.onload = async function() {
+            try {
+                appId = typeof __app_id !== 'undefined' ? __app_id : 'ufo-school-game-demo-key';
+                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+                    apiKey: "mock-key", projectId: "mock-project"
+                };
+
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                userId = auth.currentUser ? auth.currentUser.uid : 'user_' + Math.random().toString(36).substring(2, 9);
+
+                const shortCode = appId.substring(0, 6).toUpperCase();
+                document.getElementById('room-code-text').innerText = shortCode;
+                document.getElementById('connection-status').innerHTML = '<span class="flex items-center gap-2 text-emerald-400"><i class="fa-solid fa-circle-check"></i> Đã kết nối đám mây thời gian thực thành công!</span>';
+
+                roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'game_room_key_v1');
+
+                const docSnap = await getDoc(roomDocRef);
+                if (!docSnap.exists()) {
+                    await setDoc(roomDocRef, {
+                        status: 'waiting',
+                        targetCount: 2,
+                        teacherId: '',
+                        teacherActiveTime: 0,
+                        students: {},
+                        updatedAt: Date.now()
+                    });
+                }
+
+                unsubscribeRoom = onSnapshot(roomDocRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        roomData = snapshot.data();
+                        if (!roomData.students) roomData.students = {};
+                        
+                        // Kiểm tra nếu đang là giáo viên nhưng có giáo viên khác chiếm quyền
+                        if (currentRole === 'teacher' && roomData.teacherId && roomData.teacherId !== userId) {
+                            if (Date.now() - roomData.teacherActiveTime < 15000) {
+                                showModal("Cảnh báo", "Đã có một Giáo Viên khác đang điều khiển phòng này!", "fa-triangle-exclamation", "text-amber-400");
+                                window.returnToHome();
+                            }
+                        }
+                        renderUI();
+                    }
+                }, (error) => {
+                    console.error("Firebase sync error:", error);
+                });
+
+            } catch (err) {
+                console.warn("Running in local offline mode:", err);
+                document.getElementById('connection-status').innerHTML = '<span class="text-amber-400"><i class="fa-solid fa-triangle-exclamation"></i> Chế độ mô phỏng cục bộ (Offline Mode)</span>';
+                document.getElementById('room-code-text').innerText = 'DEMO123';
+                roomData.students = {
+                    's1': { name: 'Nguyễn Văn An', status: 'safe', taps: 0, progress: 50 },
+                    's2': { name: 'Trần Thị Bình', status: 'safe', taps: 0, progress: 50 }
+                };
+                renderUI();
+            }
+
+            const savedName = localStorage.getItem('ufo_student_name');
+            const savedId = localStorage.getItem('ufo_student_id');
+            if (savedName && savedId) {
+                myStudentId = savedId;
+                myStudentName = savedName;
+                document.getElementById('student-name-input').value = savedName;
+            }
+        };
+
+        window.openTeacherLoginModal = function() {
+            document.getElementById('teacher-modal').classList.remove('hidden');
+        };
+
+        window.closeTeacherModal = function() {
+            document.getElementById('teacher-modal').classList.add('hidden');
+        };
+
+        window.verifyTeacherKey = async function() {
+            const keyInput = document.getElementById('teacher-key-input').value.trim();
+            if (keyInput !== TEACHER_SECRET_KEY) {
+                showModal("Sai Mật Khẩu", "Mật khẩu giáo viên không đúng! (Mặc định: GV12345)", "fa-circle-xmark", "text-red-400");
+                return;
+            }
+
+            closeTeacherModal();
+
+            // Kiểm tra xem đã có GV nào online chưa
+            if (roomData.teacherId && roomData.teacherId !== userId && (Date.now() - roomData.teacherActiveTime < 15000)) {
+                showModal("Đã có giáo viên", "Đang có 1 giáo viên khác kết nối trong phòng. Vui lòng thử lại sau.", "fa-triangle-exclamation", "text-amber-400");
+                return;
+            }
+
+            currentRole = 'teacher';
+            roomData.teacherId = userId;
+            roomData.teacherActiveTime = Date.now();
+
+            if (roomDocRef && db) {
+                try {
+                    await setDoc(roomDocRef, { teacherId: userId, teacherActiveTime: Date.now() }, { merge: true });
+                } catch(e) {}
+            }
+
+            document.getElementById('view-role-selection').classList.add('hidden');
+            document.getElementById('view-teacher').classList.remove('hidden');
+            document.getElementById('view-student').classList.add('hidden');
+            document.getElementById('current-role-badge').innerText = "Vai trò: Giáo Viên";
+            document.getElementById('current-role-badge').className = "bg-emerald-950 border border-emerald-800 px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-300";
+        };
+
+        window.selectStudentRole = function() {
+            currentRole = 'student';
+            document.getElementById('view-role-selection').classList.add('hidden');
+            document.getElementById('view-teacher').classList.add('hidden');
+            document.getElementById('view-student').classList.remove('hidden');
+            document.getElementById('current-role-badge').innerText = "Vai trò: Học Sinh";
+            document.getElementById('current-role-badge').className = "bg-cyan-950 border border-cyan-800 px-3 py-1.5 rounded-xl text-xs font-bold text-cyan-300";
+
+            if (myStudentId && myStudentName) {
+                document.getElementById('student-login-box').classList.add('hidden');
+                document.getElementById('student-game-box').classList.remove('hidden');
+                document.getElementById('display-my-name').innerText = myStudentName;
+            }
+        };
+
+        window.returnToHome = function() {
+            currentRole = null;
+            document.getElementById('view-role-selection').classList.remove('hidden');
+            document.getElementById('view-teacher').classList.add('hidden');
+            document.getElementById('view-student').classList.add('hidden');
+            document.getElementById('current-role-badge').innerText = "Chưa chọn vai trò";
+            document.getElementById('current-role-badge').className = "bg-indigo-950 border border-indigo-800 px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-300";
+        };
+
+        window.joinAsStudent = async function() {
+            const nameInput = document.getElementById('student-name-input').value.trim();
+            if (!nameInput) {
+                showModal("Lỗi", "Vui lòng nhập họ và tên của bạn để vào lớp!", "fa-circle-xmark", "text-red-400");
+                return;
+            }
+
+            myStudentName = nameInput;
+            if (!myStudentId) {
+                myStudentId = 'student_' + Math.random().toString(36).substring(2, 9);
+                localStorage.setItem('ufo_student_id', myStudentId);
+            }
+            localStorage.setItem('ufo_student_name', myStudentName);
+
+            document.getElementById('student-login-box').classList.add('hidden');
+            document.getElementById('student-game-box').classList.remove('hidden');
+            document.getElementById('display-my-name').innerText = myStudentName;
+
+            roomData.students[myStudentId] = {
+                name: myStudentName,
+                status: 'safe',
+                taps: 0,
+                progress: 50,
+                lastUpdated: Date.now()
+            };
+
+            if (roomDocRef && db) {
+                try {
+                    await updateDoc(roomDocRef, { students: roomData.students });
+                } catch(e) {
+                    try {
+                        await setDoc(roomDocRef, roomData, { merge: true });
+                    } catch(err2) {}
+                }
+            }
+            renderUI();
+        };
+
+        window.startUFOAbduction = async function() {
+            const countInput = parseInt(document.getElementById('target-count').value) || 2;
+            const studentIds = Object.keys(roomData.students);
+
+            if (studentIds.length === 0) {
+                showModal("Thông báo", "Chưa có học sinh nào trong lớp để UFO bắt!", "fa-triangle-exclamation", "text-amber-400");
+                return;
+            }
+
+            roomData.status = 'abducting';
+            roomData.targetCount = countInput;
+
+            for (let id in roomData.students) {
+                roomData.students[id].status = 'abducting';
+                roomData.students[id].taps = 0;
+                roomData.students[id].progress = 50;
+            }
+
+            if (roomDocRef && db) {
+                try {
+                    await setDoc(roomDocRef, roomData, { merge: true });
+                } catch(e) {}
+            }
+            renderUI();
+
+            setTimeout(async () => {
+                if (roomData.status === 'abducting') {
+                    let activeStudents = Object.keys(roomData.students).map(id => ({ id, ...roomData.students[id] }));
+                    activeStudents.sort((a, b) => a.taps - b.taps);
+
+                    const targetNum = roomData.targetCount || 2;
+                    const victimIds = activeStudents.slice(0, targetNum).map(s => s.id);
+
+                    for (let id in roomData.students) {
+                        if (victimIds.includes(id)) {
+                            roomData.students[id].status = 'abducted';
+                            roomData.students[id].progress = 0;
+                        } else {
+                            roomData.students[id].status = 'escaped';
+                            roomData.students[id].progress = 100;
+                        }
+                    }
+                    roomData.status = 'finished';
+
+                    if (roomDocRef && db) {
+                        try {
+                            await setDoc(roomDocRef, roomData, { merge: true });
+                        } catch(e) {}
+                    }
+                    renderUI();
+                }
+            }, 5000);
+        };
+
+        window.resetGame = async function() {
+            roomData.status = 'waiting';
+            for (let id in roomData.students) {
+                roomData.students[id].status = 'safe';
+                roomData.students[id].taps = 0;
+                roomData.students[id].progress = 50;
+            }
+            if (roomDocRef && db) {
+                try {
+                    await setDoc(roomDocRef, roomData, { merge: true });
+                } catch(e) {}
+            }
+            renderUI();
+        };
+
+        window.clearAllStudents = async function() {
+            roomData.students = {};
+            roomData.status = 'waiting';
+            if (roomDocRef && db) {
+                try {
+                    await setDoc(roomDocRef, roomData, { merge: true });
+                } catch(e) {}
+            }
+            renderUI();
+            showModal("Đã xóa", "Đã dọn sạch danh sách học sinh.", "fa-check", "text-emerald-400");
+        };
+
+        window.copyRoomLink = function() {
+            const dummy = window.location.href;
+            const tempInput = document.createElement('input');
+            document.body.appendChild(tempInput);
+            tempInput.value = dummy;
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showModal("Thành công", "Đã sao chép liên kết phòng vào bộ nhớ tạm!", "fa-clipboard-check", "text-emerald-400");
+        };
+
+        window.tapToEscape = async function() {
+            if (!myStudentId || !roomData.students[myStudentId]) return;
+            const studentInfo = roomData.students[myStudentId];
+
+            if (roomData.status !== 'abducting' || studentInfo.status !== 'abducting') return;
+
+            studentInfo.taps += 1;
+            studentInfo.progress = Math.min(100, studentInfo.progress + 6);
+
+            if (roomDocRef && db) {
+                try {
+                    await updateDoc(roomDocRef, { [`students.${myStudentId}`]: studentInfo });
+                } catch(e) {}
+            }
+            renderUI();
+        };
+
+        setInterval(async () => {
+            if (currentRole === 'student' && myStudentId && roomData.status === 'abducting' && roomData.students && roomData.students[myStudentId]) {
+                const me = roomData.students[myStudentId];
+                if (me.status === 'abducting') {
+                    me.progress = Math.max(5, me.progress - 7);
+                    if (roomDocRef && db) {
+                        try {
+                            await updateDoc(roomDocRef, { [`students.${myStudentId}`]: me });
+                        } catch(e) {}
+                    }
+                    renderUI();
+                }
+            }
+        }, 200);
+
+        function renderUI() {
+            const container = document.getElementById('students-container');
+            const studentKeys = Object.keys(roomData.students);
+            document.getElementById('total-online-badge').innerText = `Đã vào: ${studentKeys.length} học sinh`;
+
+            const laserCone = document.getElementById('teacher-laser-cone');
+            if (roomData.status === 'abducting') {
+                laserCone.classList.remove('hidden');
+            } else {
+                laserCone.classList.add('hidden');
+            }
+
+            if (studentKeys.length === 0) {
+                container.innerHTML = `<div class="text-center text-slate-500 italic col-span-full py-16">Chưa có học sinh nào tham gia...</div>`;
+            } else {
+                let html = '';
+                let abductedCount = 0;
+
+                studentKeys.forEach(id => {
+                    const st = roomData.students[id];
+                    let badgeBg = "bg-slate-900 border-slate-800 text-slate-300";
+                    let humanIcon = '<div class="w-10 h-10 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-base font-bold shadow"><i class="fa-solid fa-user"></i></div>';
+                    let transformClass = "";
+
+                    if (st.status === 'abducting') {
+                        badgeBg = "bg-amber-500/20 border-amber-500 text-amber-300 ring-2 ring-amber-500/50 shadow-2xl";
+                        humanIcon = '<div class="w-10 h-10 rounded-full bg-amber-500/30 border border-amber-400 flex items-center justify-center text-amber-300 text-base font-bold animate-bounce"><i class="fa-solid fa-person-running text-red-400"></i></div>';
+                        transformClass = "student-abducting";
+                    } else if (st.status === 'abducted') {
+                        abductedCount++;
+                        badgeBg = "bg-red-500/20 border-red-500 text-red-300 opacity-60";
+                        humanIcon = '<div class="w-10 h-10 rounded-full bg-red-900/60 border border-red-500 flex items-center justify-center text-red-400 text-base font-bold"><i class="fa-solid fa-ghost"></i></div>';
+                        transformClass = "transform -translate-y-20 scale-75 opacity-40";
+                    } else if (st.status === 'escaped') {
+                        badgeBg = "bg-emerald-500/20 border-emerald-500 text-emerald-300";
+                        humanIcon = '<div class="w-10 h-10 rounded-full bg-emerald-900/60 border border-emerald-500 flex items-center justify-center text-emerald-300 text-base font-bold"><i class="fa-solid fa-shield-halved"></i></div>';
+                    }
+
+                    html += `
+                        <div class="bg-slate-900/90 border ${badgeBg} rounded-2xl p-3.5 flex flex-col items-center justify-between gap-2.5 shadow-xl transition-all duration-500 ${transformClass}">
+                            <div class="flex items-center justify-between w-full">
+                                <span class="text-[9px] font-mono px-2 py-0.5 rounded bg-slate-950 font-bold uppercase">${st.status}</span>
+                                ${humanIcon}
+                            </div>
+                            <div class="text-center">
+                                <p class="text-xs font-black text-white truncate max-w-[120px]">${st.name}</p>
+                                <p class="text-[10px] text-slate-400 mt-0.5">Taps: <span class="text-cyan-300 font-bold">${st.taps || 0}</span></p>
+                            </div>
+                            <div class="w-full bg-slate-950 rounded-full h-2.5 overflow-hidden border border-slate-800">
+                                <div class="bg-gradient-to-r from-red-500 via-amber-400 to-emerald-400 h-full transition-all duration-100" style="width: ${st.progress || 50}%"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+                document.getElementById('abducted-counter').innerText = `Bị bắt lên bảng: ${abductedCount}`;
+
+                let statusDesc = 'Đang chờ giáo viên kích hoạt UFO...';
+                if (roomData.status === 'abducting') statusDesc = '🛸 UFO khổng lồ đang hút tất cả (5s)! Ai tap chậm nhất sẽ bị bắt!';
+                else if (roomData.status === 'finished') statusDesc = '🏁 Đã xong vòng chơi! Đã chọn ra các bạn bị bắt lên bảng.';
+                document.getElementById('status-text-desc').innerText = statusDesc;
+            }
+
+            if (myStudentId && roomData.students[myStudentId]) {
+                const me = roomData.students[myStudentId];
+                const laserOverlay = document.getElementById('laser-overlay');
+                const statusBadge = document.getElementById('student-status-badge');
+                const titleEl = document.getElementById('game-instruction-title');
+                const descEl = document.getElementById('game-instruction-desc');
+                const progressContainer = document.getElementById('abduction-progress-container');
+                const progressBar = document.getElementById('abduction-progress-bar');
+                const tapBtn = document.getElementById('tap-action-btn');
+                const ufoThreat = document.getElementById('ufo-threat-indicator');
+
+                if (roomData.status === 'abducting') {
+                    laserOverlay.classList.remove('hidden');
+                    statusBadge.className = "bg-red-500/20 border border-red-500/50 text-red-300 px-3.5 py-1.5 rounded-xl text-xs font-bold animate-pulse";
+                    statusBadge.innerText = "⚡ UFO ĐANG HÚT - TAP NHANH (5S)!";
+                    titleEl.innerText = "TAP LIÊN TỤC!";
+                    titleEl.className = "text-2xl font-black text-red-400 tracking-tight animate-bounce";
+                    descEl.innerText = "Tap liên tục để chống lại lực hút mạnh!";
+                    progressContainer.classList.remove('hidden');
+                    progressBar.style.width = `${me.progress}%`;
+                    tapBtn.disabled = false;
+                    tapBtn.className = "w-48 h-48 rounded-full bg-gradient-to-tr from-red-600 to-amber-600 border-4 border-amber-400 text-white font-black text-xl shadow-2xl shadow-red-900/50 transition-all duration-75 flex flex-col items-center justify-center gap-1 active:scale-95 cursor-pointer animate-pulse";
+                    ufoThreat.className = "transform scale-150 animate-bounce origin-top";
+                } else if (me.status === 'escaped') {
+                    laserOverlay.classList.add('hidden');
+                    statusBadge.className = "bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 px-3.5 py-1.5 rounded-xl text-xs font-bold";
+                    statusBadge.innerText = "🎉 BẠN ĐÃ BÁM TRỤ AN TOÀN!";
+                    titleEl.innerText = "AN TOÀN!";
+                    titleEl.className = "text-2xl font-black text-emerald-400 tracking-tight";
+                    descEl.innerText = `Bạn đã tap xuất sắc (${me.taps} taps) và thoát nạn!`;
+                    progressContainer.classList.add('hidden');
+                    tapBtn.disabled = true;
+                    tapBtn.className = "w-48 h-48 rounded-full bg-slate-900 border-4 border-slate-800 text-slate-600 font-black text-lg shadow-2xl flex flex-col items-center justify-center gap-1 cursor-not-allowed opacity-50";
+                    ufoThreat.className = "transform scale-125 origin-top";
+                } else if (me.status === 'abducted') {
+                    laserOverlay.classList.add('hidden');
+                    statusBadge.className = "bg-red-950/60 border border-red-700 text-red-400 px-3.5 py-1.5 rounded-xl text-xs font-bold";
+                    statusBadge.innerText = "🛸 BẠN ĐÃ BỊ HÚT LÊN BẢNG!";
+                    titleEl.innerText = "BỊ BẮT LÊN BẢNG!";
+                    titleEl.className = "text-2xl font-black text-red-400 tracking-tight";
+                    descEl.innerText = `Bạn tap chậm nhất (${me.taps} taps) nên đã bị UFO bắt!`;
+                    progressContainer.classList.add('hidden');
+                    tapBtn.disabled = true;
+                    tapBtn.className = "w-48 h-48 rounded-full bg-slate-900 border-4 border-slate-800 text-slate-600 font-black text-lg shadow-2xl flex flex-col items-center justify-center gap-1 cursor-not-allowed opacity-50";
+                    ufoThreat.className = "transform scale-125 origin-top";
+                } else {
+                    laserOverlay.classList.add('hidden');
+                    statusBadge.className = "bg-amber-500/20 border border-amber-500/40 text-amber-300 px-3.5 py-1.5 rounded-xl text-xs font-bold";
+                    statusBadge.innerText = "Đang an toàn dưới đất";
+                    titleEl.innerText = "CHUẨN BỊ";
+                    titleEl.className = "text-2xl font-black text-white tracking-tight";
+                    descEl.innerText = "Chờ giáo viên bấm nút kích hoạt UFO hút tất cả.";
+                    progressContainer.classList.add('hidden');
+                    tapBtn.disabled = true;
+                    tapBtn.className = "w-48 h-48 rounded-full bg-slate-900 border-4 border-slate-800 text-slate-600 font-black text-lg shadow-2xl flex flex-col items-center justify-center gap-1 cursor-not-allowed opacity-50";
+                    ufoThreat.className = "transform scale-125 origin-top";
+                }
+            }
+        }
+
+        window.showModal = function(title, message, iconClass = "fa-check", iconColor = "text-emerald-400") {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-message').innerText = message;
+            const iconBox = document.getElementById('modal-icon');
+            iconBox.className = `w-12 h-12 bg-slate-800 ${iconColor} rounded-full flex items-center justify-center mx-auto text-xl border border-slate-700`;
+            iconBox.innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
+            document.getElementById('custom-modal').classList.remove('hidden');
+        };
+
+        window.closeModal = function() {
+            document.getElementById('custom-modal').classList.add('hidden');
+        };
+    </script>
+</body>
+</html>
